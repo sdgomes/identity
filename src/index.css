@@ -151,7 +151,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .form-section:last-of-type { border-bottom: 0; }
 .form-section h3 { margin: 0; font-size: 18px; letter-spacing: -0.3px; }
 .form-section-hint { margin: 4px 0 0; font-size: 14px; line-height: 1.45; }
-.form-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 12px; margin-top: 22px; }
+/* minmax(0, 1fr): sem isso a coluna cresce até a largura mínima do campo (a do de data no iOS é grande). */
+.form-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 12px; margin-top: 22px; }
 .outlined-field { position: relative; display: block; min-width: 0; font-weight: 400; }
 .outlined-field-wide { grid-column: 1 / -1; }
 /* O rótulo fica sobre a borda: o fundo é metade da cor da tela, metade da cor do campo. */
@@ -163,6 +164,13 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .outlined-field input, .outlined-field select {
   width: 100%; min-width: 0; height: 50px; padding: 12px 14px; border: 1px solid #8395a3; border-radius: 10px;
   background: #fff; font-size: 16px; text-overflow: ellipsis;
+}
+/* No iPhone o campo de data é um controle nativo que ignora largura e altura e centraliza o texto:
+   sem a aparência nativa ele fica igual aos outros campos. Só no iOS (-webkit-touch-callout), para o Chrome
+   manter o ícone de calendário. */
+@supports (-webkit-touch-callout: none) {
+  .outlined-field input[type='date'] { display: block; -webkit-appearance: none; appearance: none; text-align: left; }
+  .outlined-field input[type='date']::-webkit-date-and-time-value { min-height: 1.5em; margin: 0; text-align: left; }
 }
 .outlined-field input:focus, .outlined-field select:focus { outline: 1px solid var(--primary); outline-offset: 0; border-color: var(--primary); }
 .outlined-field:focus-within > span { color: var(--primary); }
@@ -186,7 +194,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 .form-submit-bar button { width: 100%; padding: 15px 16px; border-radius: 999px; font-size: 16px; }
 @media (max-width: 340px) {
-  .form-fields { grid-template-columns: 1fr; }
+  .form-fields { grid-template-columns: minmax(0, 1fr); }
 }
 /* Carteirinha no formato de documento estudantil: cabeçalho com o logo, foto 3x4 ao lado do QR Code,
    folha branca com os dados e o logo da instituição, rodapé com o status. */
