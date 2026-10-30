@@ -568,3 +568,9 @@ body:has(.fullscreen-dialog[open]) { overflow: hidden; }
   .user-card-actions { width: 100%; }
   .user-card-action { flex: 1; padding: 9px 16px; }
 }
+/* No celular, campo com fonte menor que 16px faz o iOS dar zoom ao focar. Os campos herdam 14px do rótulo,
+   então em telas de toque ficam com 16px. Fica no fim do arquivo para valer sobre as regras de input, select e
+   textarea acima. (Travar o zoom no viewport impediria a pinça, que ajuda quem lê.) */
+@media (max-width: 768px), (pointer: coarse) {
+  input, select, textarea { font-size: 16px; }
+}

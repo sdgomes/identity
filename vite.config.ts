@@ -42,8 +42,8 @@ export default defineConfig({
       // Os ícones já entram pelo globPatterns abaixo; incluí-los de novo só duplica a lista.
       includeManifestIcons: false,
       manifest: {
-        name: 'Identity',
-        short_name: 'Identity',
+        name: 'FMU',
+        short_name: 'FMU',
         description: 'Carteirinha, disciplinas, secretaria e novidades do seu curso.',
         lang: 'pt-BR',
         // Barra de status do aparelho branca, não na cor primária.
@@ -62,6 +62,8 @@ export default defineConfig({
         // Só o app (HTML, JS, CSS e ícones) fica em cache. Chamadas ao Supabase sempre vão à rede;
         // offline, as telas usam o que já guardam no localStorage (carteirinha, disciplinas, feed).
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // A arte original dos ícones (logo.png) só serve para gerá-los; não precisa ficar no cache.
+        globIgnores: ['logo.png'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
       },
