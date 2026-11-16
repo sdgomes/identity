@@ -22,6 +22,9 @@ export type StudentCard = {
     // Data de ingresso no curso: a data em que a matrícula foi feita.
     startsOn: string
     validUntil: string
+    // Início dos ciclos de 6 meses da carteirinha: data da matrícula ou da última reativação.
+    // Carteirinha guardada antes deste campo existir não o tem; a tela usa startsOn no lugar.
+    cardCycleStartsOn?: string
     currentSemester: number
     totalSemesters: number
   } | null
@@ -53,7 +56,7 @@ async function fetchOwn(userId: string, previous: StudentCard | null): Promise<S
     // A matrícula mais recente é a atual (ou a última, se estiver vencida).
     supabase
       .from('enrollment_details')
-      .select('number, ra, course_name, course_level, class_group_code, status, starts_on, valid_until, current_semester, total_semesters')
+      .select('number, ra, course_name, course_level, class_group_code, status, starts_on, valid_until, card_cycle_starts_on, current_semester, total_semesters')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -90,6 +93,7 @@ async function fetchOwn(userId: string, previous: StudentCard | null): Promise<S
           status: enrollment.status,
           startsOn: enrollment.starts_on,
           validUntil: enrollment.valid_until,
+          cardCycleStartsOn: enrollment.card_cycle_starts_on,
           currentSemester: enrollment.current_semester,
           totalSemesters: enrollment.total_semesters,
         }

@@ -18,21 +18,28 @@ const levelLabels: Record<Enrollment['courseLevel'], string> = {
   pos_graduacao: 'Pós-graduação',
 }
 
-// Validade no formato do documento: MM/AAAA.
-function formatValidity(value: string) {
-  const [year, month] = value.split('-')
-  return `${month}/${year}`
+// Soma meses a uma data YYYY-MM-DD; dia que não existe no mês final vira o último dia (31/08 + 6 = 28/02).
+function addMonths(value: string, months: number) {
+  const [year, month, day] = value.split('-').map(Number)
+  const target = new Date(Date.UTC(year, month - 1 + months, 1))
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate()
+  target.setUTCDate(Math.min(day, lastDay))
+  return target.toISOString().slice(0, 10)
 }
 
-// A carteirinha vale por semestre (jan–jun, jul–dez, como no banco) e renova sozinha a cada virada:
-// vence no fim do semestre de hoje, sem passar do fim da matrícula. Matrícula já vencida mostra a data
-// em que venceu. Calculada na tela para virar no dia certo mesmo com a carteirinha guardada no navegador.
+// A carteirinha vale 6 meses e renova sozinha de 6 em 6 meses, contados da matrícula (cadastro,
+// renovação ou troca de curso) ou da última reativação; nunca passa do fim da matrícula. Matrícula
+// já vencida mostra a data em que venceu. Calculada na tela para renovar no dia certo mesmo com a
+// carteirinha guardada no navegador.
 function cardValidUntil(enrollment: Enrollment) {
   // Data de hoje no fuso de Brasília (mesma referência de public.today_br), em YYYY-MM-DD.
   const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
-  const [year, month] = today.split('-').map(Number)
-  const semesterEnd = month <= 6 ? `${year}-06-30` : `${year}-12-31`
-  return semesterEnd < enrollment.validUntil ? semesterEnd : enrollment.validUntil
+  const cycleStart = enrollment.cardCycleStartsOn ?? enrollment.startsOn
+  let cycleEnd = addMonths(cycleStart, 6)
+  for (let cycles = 2; cycleEnd < today && cycleEnd < enrollment.validUntil; cycles += 1) {
+    cycleEnd = addMonths(cycleStart, 6 * cycles)
+  }
+  return cycleEnd < enrollment.validUntil ? cycleEnd : enrollment.validUntil
 }
 
 // Código de uso: número da matrícula e ano da validade (ex.: 001.007/26). Só identifica a carteirinha.
@@ -147,7 +154,7 @@ export function CarteirinhaPage() {
             </dl>
 
             <div className="student-validity">
-              <span>Válida até <strong>{formatValidity(validUntil)}</strong></span>
+              <span>Válida até <strong>{formatDay(validUntil)}</strong></span>
               <img className="student-logo" src={institutionLogo} alt="FIAM-FAAM Centro Universitário" />
             </div>
           </section>
