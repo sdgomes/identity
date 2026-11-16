@@ -24,10 +24,21 @@ function formatValidity(value: string) {
   return `${month}/${year}`
 }
 
+// A carteirinha vale por semestre (jan–jun, jul–dez, como no banco) e renova sozinha a cada virada:
+// vence no fim do semestre de hoje, sem passar do fim da matrícula. Matrícula já vencida mostra a data
+// em que venceu. Calculada na tela para virar no dia certo mesmo com a carteirinha guardada no navegador.
+function cardValidUntil(enrollment: Enrollment) {
+  // Data de hoje no fuso de Brasília (mesma referência de public.today_br), em YYYY-MM-DD.
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
+  const [year, month] = today.split('-').map(Number)
+  const semesterEnd = month <= 6 ? `${year}-06-30` : `${year}-12-31`
+  return semesterEnd < enrollment.validUntil ? semesterEnd : enrollment.validUntil
+}
+
 // Código de uso: número da matrícula e ano da validade (ex.: 001.007/26). Só identifica a carteirinha.
-function usageCodeOf(enrollment: Enrollment) {
+function usageCodeOf(enrollment: Enrollment, validUntil: string) {
   const number = String(enrollment.number).padStart(6, '0')
-  return `${number.slice(0, 3)}.${number.slice(3)}/${enrollment.validUntil.slice(2, 4)}`
+  return `${number.slice(0, 3)}.${number.slice(3)}/${validUntil.slice(2, 4)}`
 }
 
 // QR Code gerado no navegador. É representativo: não há serviço de validação por trás.
@@ -75,7 +86,8 @@ export function CarteirinhaPage() {
   const enrollment = card?.enrollment
   const name = card?.fullName ?? session?.user.email ?? ''
   const active = enrollment?.status === 'matriculado'
-  const usageCode = enrollment ? usageCodeOf(enrollment) : null
+  const validUntil = enrollment ? cardValidUntil(enrollment) : null
+  const usageCode = enrollment && validUntil ? usageCodeOf(enrollment, validUntil) : null
   // O QR Code leva exatamente o código de uso mostrado abaixo dele.
   const qrCode = useQrCode(usageCode)
 
@@ -93,7 +105,7 @@ export function CarteirinhaPage() {
         </>
       )}
 
-      {card && enrollment && usageCode && (
+      {card && enrollment && validUntil && usageCode && (
         <article className="student-id" aria-label={`Carteirinha de ${name}`}>
           {/* Cabeçalho do documento: marca à esquerda, tipo do documento à direita. */}
           <header className="student-id-header">
@@ -135,7 +147,7 @@ export function CarteirinhaPage() {
             </dl>
 
             <div className="student-validity">
-              <span>Válida até <strong>{formatValidity(enrollment.validUntil)}</strong></span>
+              <span>Válida até <strong>{formatValidity(validUntil)}</strong></span>
               <img className="student-logo" src={institutionLogo} alt="FIAM-FAAM Centro Universitário" />
             </div>
           </section>
